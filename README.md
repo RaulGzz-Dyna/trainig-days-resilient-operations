@@ -1,23 +1,35 @@
-# trainig-days-resilient-operations
+# Training Days 2026 - Resilient Operations with Dynatrace
 
-## Lab 1.1 - Find Logs From Grail (queries)
+Este repositorio recopila las queries y los pasos de los laboratorios del curso **Resilient Operations with Dynatrace**, parte de los **Training Days 2026**. La idea es tener, en un solo lugar, las queries DQL en orden (listas para copiar/pegar) junto con las acciones de UI que acompañan cada paso de las guías oficiales, para poder repasar o repetir los ejercicios sin depender de las capturas de pantalla del curso.
+
+El curso está organizado en tres laboratorios principales:
+
+- **Lab 1 - Investigation**: uso de Grail y Security Investigator para reconstruir, a partir de logs, la causa raíz de un incidente (errores 503, fallas de heartbeat, reinicio del pod en Kubernetes) y reportar los hallazgos en Notebooks.
+- **Lab 2 - Vulnerabilities**: identificación y análisis de vulnerabilidades en el entorno monitoreado.
+- **Lab 3 - Attacks**: detección y análisis de ataques sobre el entorno.
+
+Cada laboratorio se documenta como una sección de este README, con las queries en bloques de código `dql` y los pasos de UI (clics, colores de nodo, pivots, etc.) en texto explicativo, en el mismo orden en que aparecen en la guía.
+
+## Lab 1 - Investigation
+
+### Lab 1.1 - Find Logs From Grail (queries)
 
 Queries en orden, listas para copiar/pegar siguiendo los pasos de la guia.
 
-### 1. Fetch logs del cluster
+#### 1. Fetch logs del cluster
 
 ```dql
 fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 ```
 
-### 2. Agregar `summarize` (Log Sources)
+#### 2. Agregar `summarize` (Log Sources)
 
 ```dql
 | summarize count(), by: { k8s.cluster.name, k8s.container.name, dt.process.name }
 ```
 
-### 3. Fetch logs de ISTIO (quitar el `summarize` y filtrar por `istio-proxy`)
+#### 3. Fetch logs de ISTIO (quitar el `summarize` y filtrar por `istio-proxy`)
 
 ```dql
 fetch logs
@@ -25,19 +37,19 @@ fetch logs
 | filter k8s.container.name == "istio-proxy"
 ```
 
-### 4. Extraer `response_code` del JSON
+#### 4. Extraer `response_code` del JSON
 
 ```dql
 | parse content, "json{int:response_code}(flat=true)"
 ```
 
-### 5. Crear serie temporal con `makeTimeseries`
+#### 5. Crear serie temporal con `makeTimeseries`
 
 ```dql
 | makeTimeseries count(default: 0), by: response=toString(response_code), interval: 1m
 ```
 
-### 6. Query completa (Response code distribution)
+#### 6. Query completa (Response code distribution)
 
 ```dql
 fetch logs
@@ -47,19 +59,19 @@ fetch logs
 | makeTimeseries count(default: 0), by: response=toString(response_code), interval: 1m
 ```
 
-### 7. Filtrar solo respuestas 503 (quitar `makeTimeseries` antes de agregar esto)
+#### 7. Filtrar solo respuestas 503 (quitar `makeTimeseries` antes de agregar esto)
 
 ```dql
 | filter response_code == 503
 ```
 
-### 8. Obtener el primer timestamp
+#### 8. Obtener el primer timestamp
 
 ```dql
 | summarize timestamp = min(timestamp)
 ```
 
-### 9. Query final (What happened before the first 503?)
+#### 9. Query final (What happened before the first 503?)
 
 ```dql
 fetch logs
@@ -70,11 +82,11 @@ fetch logs
 | summarize timestamp = min(timestamp)
 ```
 
-## Lab 1.2 - What Happened Before the First 503 (queries)
+### Lab 1.2 - What Happened Before the First 503 (queries)
 
 Continuación del Lab 1.1. Aparece un nuevo campo virtual `timestamp_diff` en la tabla de resultados, que indica la diferencia de tiempo entre el campo timestamp y el timestamp de referencia (por ahora, 0 ms).
 
-### 1. Quitar las últimas dos líneas (filtro de 503 y `summarize`) y filtrar eventos anteriores al primer 503
+#### 1. Quitar las últimas dos líneas (filtro de 503 y `summarize`) y filtrar eventos anteriores al primer 503
 
 Se puede agregar el filtro de timestamp haciendo clic derecho sobre el valor del timestamp en la tabla de resultados y eligiendo **Timestamp filters → Earlier than**, o usando el menú **Reference time → Earlier than** en la parte superior de la Investigation.
 
@@ -88,7 +100,7 @@ fetch logs
 
 Ejecutar la query. Muchos de los eventos resultan en 200 (OK) o 401 (Unauthorized), que no son interesantes por ahora. Cambiar el color de este nodo a **azul** (clic derecho sobre el nodo → Color → azul) para referencia futura.
 
-### 2. Filtrar los códigos 200 y 401
+#### 2. Filtrar los códigos 200 y 401
 
 Mantener presionada la tecla Ctrl (Cmd en Mac), seleccionar los valores 401 y 200 en la tabla de resultados, clic derecho → Filter. Esto agrega automáticamente:
 
@@ -104,7 +116,7 @@ Agregar `not` para excluir esos registros:
 
 Ejecutar la query. Si no hay resultados, cambiar el color del nodo a **naranja** para referencia futura.
 
-### Response Latency - extraer duración y generar métricas
+#### Response Latency - extraer duración y generar métricas
 
 Volver al nodo azul creado antes. Cambiar el `parse` para extraer también `duration` de los logs de istio:
 
@@ -131,7 +143,7 @@ fetch logs
 
 Renombrar el nodo como **"response latency chart"** (clic derecho → Rename). Nada fuera de lo normal en la latencia.
 
-### Events Based on `start_time` Field
+#### Events Based on `start_time` Field
 
 El campo `timestamp` representa el fin de la transacción (cuando se recibió la respuesta). Como la solicitud sospechosa pudo haber tardado mucho en responder, puede aparecer en los logs después del primer 503 si se ordena por `timestamp`. Para verificar esto, hay que filtrar usando el campo `start_time` en vez de `timestamp`.
 
@@ -158,7 +170,7 @@ Se puede inspeccionar el payload JSON completo con clic derecho sobre el campo `
 
 Cambiar el color del nodo a **verde** para referencia futura.
 
-### What Was Executed With the Request? (Distributed Tracing)
+#### What Was Executed With the Request? (Distributed Tracing)
 
 Para investigar qué ocurrió durante esta solicitud, usamos Dynatrace Distributed Tracing junto con el `trace_id` adjunto al evento de log.
 
@@ -169,9 +181,9 @@ Para investigar qué ocurrió durante esta solicitud, usamos Dynatrace Distribut
    - Clic derecho sobre el registro en los resultados → **Pivot query by → Trace ID**, que crea un nuevo nodo de query bajo el nodo actual.
    - Clic derecho sobre el `trace_id` en la tabla → **Pivot query by → Use custom dimension**, para definir una query personalizada con los valores elegidos.
 
-## Lab 1.3 - Pivot From Evidence Values (queries)
+### Lab 1.3 - Pivot From Evidence Values (queries)
 
-### 1. Pivot query by evidence (usando la lista "errors trace")
+#### 1. Pivot query by evidence (usando la lista "errors trace")
 
 Navegar hasta el primer nodo (el de todos los logs del cluster). Desde el menú de la Evidence list **"errors trace"**, elegir **Pivot query by evidence**. En el modal de pivoting, en vez del comando `search` por defecto, usar un `filter`:
 
@@ -199,7 +211,7 @@ Se puede eliminar el nodo vacío que tiene `trace_id == "demo"` (era solo demost
 
 Al comparar con el log de ejemplo de un POST request esperado (sección "Background"), este registro es distinto — en particular el stack trace, que revela irregularidades en el heartbeat que dejaron al sistema en un estado inesperado.
 
-### What Else Did the Application Do After This?
+#### What Else Did the Application Do After This?
 
 Pasos para ver qué hizo la aplicación después de este evento:
 
@@ -228,9 +240,9 @@ Commencing graceful shutdown. Waiting for active requests to complete.
 
 ¿Por qué ocurrió esto? Habrá que seguir investigando en otros logs.
 
-## Lab 1.4 - What Did Kubernetes Do at That Time (queries)
+### Lab 1.4 - What Did Kubernetes Do at That Time (queries)
 
-### 1. Filtrar los logs del control plane de K8S ("Linux System")
+#### 1. Filtrar los logs del control plane de K8S ("Linux System")
 
 Copiar las últimas dos líneas (`filter timestamp` y `sort`) de la query anterior. Ir al segundo nodo gris ("Log sources"), quitar la línea de `summarize`, hacer clic derecho sobre el valor **"Linux System"** en la columna `dt.process.name` → **Filter for**, y pegar al final las líneas copiadas.
 
@@ -256,7 +268,7 @@ Killing container with a grace period
 4. La señal reinicia el servicio de forma graceful.
 5. Las requests que llegan durante el reinicio devuelven código **503** (service not available).
 
-### 2. Encontrar el fin del ciclo de reinicio
+#### 2. Encontrar el fin del ciclo de reinicio
 
 Buscar el primer evento exitoso después del reinicio (indica el fin de la secuencia de reinicio). Clic derecho sobre su `timestamp` → **Timestamp filter → Earlier than**:
 
@@ -266,7 +278,7 @@ Buscar el primer evento exitoso después del reinicio (indica el fin de la secue
 
 Ejecutar la query. Cambiar el color del nodo a **neón** y renombrarlo a **"Restart Cycle"**.
 
-### What Was The Request That Killed It All? (análisis del Heartbeat Fragment)
+#### What Was The Request That Killed It All? (análisis del Heartbeat Fragment)
 
 Volver al primer nodo **morado** para analizar el fragmento de heartbeat que se envió, posible origen del problema.
 
@@ -317,7 +329,7 @@ fetch logs
 
 Los resultados no dicen mucho directamente en el Security Investigator; se usará Notebooks para darles mejor formato. Cambiar el color del nodo a **dorado (Gold)** y renombrarlo a **"Heartbeats"**.
 
-### Report Your Investigation Results in Notebooks
+#### Report Your Investigation Results in Notebooks
 
 Para generar un reporte, seleccionar (Ctrl/Cmd + clic) los siguientes nodos y elegir **Download nodes as → Notebooks document** (marcar el checkbox **Results** para incluir resultados, luego **Download**):
 
@@ -328,10 +340,18 @@ Para generar un reporte, seleccionar (Ctrl/Cmd + clic) los siguientes nodos y el
 - Nodo neón — reinicio de la aplicación
 - Nodo dorado — bitmap de heartbeats
 
-### Illustrate Your Report
+#### Illustrate Your Report
 
 1. Abrir **Notebooks**, elegir **Upload** y seleccionar el documento descargado desde el Security Investigator.
 2. Ajustar el tamaño de la tabla de resultados de "log sources" para que llene el contenido.
 3. Cambiar las visualizaciones de "response code distribution" y "response latency chart" a **line chart** y ocultar el input (**Hide the input**).
 4. Ajustar el tamaño de todas las secciones para que el reporte se vea prolijo; agregar secciones de markup donde haga falta para completar la narrativa de la investigación.
 5. En la sección del Heartbeat Fragment, abrir **Options** → elegir visualización **Honeycomb** → en la paleta de colores, elegir **Fireplace**.
+
+## Lab 2 - Vulnerabilities
+
+_Pendiente — se agregará el contenido de este laboratorio próximamente._
+
+## Lab 3 - Attacks
+
+_Pendiente — se agregará el contenido de este laboratorio próximamente._
