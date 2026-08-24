@@ -335,3 +335,7 @@ Para generar un reporte, seleccionar (Ctrl/Cmd + clic) los siguientes nodos y el
 3. Cambiar las visualizaciones de "response code distribution" y "response latency chart" a **line chart** y ocultar el input (**Hide the input**).
 4. Ajustar el tamaño de todas las secciones para que el reporte se vea prolijo; agregar secciones de markup donde haga falta para completar la narrativa de la investigación.
 5. En la sección del Heartbeat Fragment, abrir **Options** → elegir visualización **Honeycomb** → en la paleta de colores, elegir **Fireplace**.
+
+
+Se deberia de ver algo similar a esta imagen con los cambios aplicados
+<img width="1254" height="526" alt="image" src="https://github.com/user-attachments/assets/d713fee5-de4b-47a8-a598-22b4510d98a9" />
