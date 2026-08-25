@@ -89,7 +89,7 @@ fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 | filter k8s.container.name == "istio-proxy"
 | parse content, "json{int:response_code}(flat=true)"
-| filter timestamp < toTimestamp("2025-02-14T05:32:01.000000000Z")
+| filter timestamp < toTimestamp("2026-09-03T05:32:01.000000000Z")
 ```
 
 Ejecutar la query. Muchos de los eventos resultan en 200 (OK) o 401 (Unauthorized), que no son interesantes por ahora. Cambiar el color de este nodo a **azul** (clic derecho sobre el nodo → Color → azul) para referencia futura.
@@ -131,7 +131,7 @@ fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 | filter k8s.container.name == "istio-proxy"
 | parse content, "json{string:response_code, int:duration}(flat=true)"
-| filter timestamp < toTimestamp("2025-02-14T05:32:01.000000000Z")
+| filter timestamp < toTimestamp("2026-09-03T05:32:01.000000000Z")
 | makeTimeseries {avg(duration), max(duration)}, interval:1m
 ```
 
@@ -158,7 +158,7 @@ fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 | filter k8s.container.name == "istio-proxy"
 | parse content, "json{int:response_code, timestamp('yyyy-MM-ddTHH:mm:ss.SZ'):start_time}(flat=true)"
-| filter start_time > toTimestamp("2025-02-14T05:32:01.000000000Z")
+| filter start_time > toTimestamp("2026-09-03T05:32:01.000000000Z")
 | filter not in(response_code, {200, 401})
 ```
 
@@ -233,7 +233,7 @@ fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 | filter k8s.pod.name == "heartbeat-matcher-service-78f6c784c9-2g77v"
 | filter k8s.container.name == "heartbeat-matcher-service"
-| filter timestamp > toTimestamp("2025-02-14T05:32:00.000000000Z")
+| filter timestamp > toTimestamp("2026-09-03T05:32:00.000000000Z")
 | sort timestamp
 ```
 
@@ -255,7 +255,7 @@ Copiar las últimas dos líneas (`filter timestamp` y `sort`) de la query anteri
 fetch logs
 | filter k8s.cluster.name == "prod.cupid.cluster"
 | filter dt.process.name == "Linux System"
-| filter timestamp > toTimestamp("2025-02-14T05:32:00.000000000Z")
+| filter timestamp > toTimestamp("2026-09-03T05:32:00.000000000Z")
 | sort timestamp
 ```
 
@@ -282,7 +282,7 @@ Killing container with a grace period
 Buscar el primer evento exitoso después del reinicio (indica el fin de la secuencia de reinicio). Clic derecho sobre su `timestamp` → **Timestamp filter → Earlier than**:
 
 ```dql
-| filter timestamp < toTimestamp("2025-02-06T05:35:01.000000000Z")
+| filter timestamp < toTimestamp("2026-09-03T05:35:01.000000000Z")
 ```
 
 Ejecutar la query. Cambiar el color del nodo a **neón** y renombrarlo a **"Restart Cycle"**.
