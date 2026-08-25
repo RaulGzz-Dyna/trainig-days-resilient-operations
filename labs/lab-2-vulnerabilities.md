@@ -122,6 +122,9 @@ fetch security.events
 | summarize count()
 ```
 
+<img width="1791" height="725" alt="image" src="https://github.com/user-attachments/assets/8a16199a-b213-41e9-bcee-fae2aaf943aa" />
+
+
 ## 🧬 2.2 - Desglose de vulnerabilidades
 
 Segunda sección del dashboard: un título visual, una variable dinámica de severidad y las gráficas de detalle/agrupación que la usan.
@@ -133,6 +136,8 @@ Query para una tile de texto/markdown usada solo como separador visual entre sec
 ```dql
 data record(a="Vulnerabilidades por grupos")
 ```
+
+<img width="691" height="751" alt="image" src="https://github.com/user-attachments/assets/a6ffe3ce-e15b-4e93-b77b-c7a51631f88a" />
 
 ### 🎚️ 11. Variable dinámica `$Severity`
 
@@ -186,3 +191,6 @@ fetch security.events
 | sort Total desc
 | limit 10
 ```
+
+<img width="1797" height="718" alt="image" src="https://github.com/user-attachments/assets/be9ecb8d-3a17-425c-8392-c4e95cf41a4d" />
+
