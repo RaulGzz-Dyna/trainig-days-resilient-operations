@@ -16,6 +16,9 @@ fetch logs
 ```dql
 | summarize count(), by: { k8s.cluster.name, k8s.container.name, dt.process.name }
 ```
+Deberias de ver algo como lo siguiente
+<img width="1594" height="369" alt="image" src="https://github.com/user-attachments/assets/ee382b59-2f81-4b32-a119-885d232906f6" />
+
 
 ### 3. Fetch logs de ISTIO (quitar el `summarize` y filtrar por `istio-proxy`)
 
@@ -46,6 +49,9 @@ fetch logs
 | parse content, "json{int:response_code}(flat=true)"
 | makeTimeseries count(default: 0), by: response=toString(response_code), interval: 1m
 ```
+La grafica debe de salir similar a esto
+<img width="1521" height="667" alt="image" src="https://github.com/user-attachments/assets/915e52c6-a9a4-4a30-a141-a170606a2ff8" />
+
 
 ### 7. Filtrar solo respuestas 503 (quitar `makeTimeseries` antes de agregar esto)
 
@@ -129,6 +135,10 @@ fetch logs
 | makeTimeseries {avg(duration), max(duration)}, interval:1m
 ```
 
+El resultado es el siguiente
+<img width="1043" height="411" alt="image" src="https://github.com/user-attachments/assets/12ee78d6-6b8a-40fd-aab3-e0769fa68e3a" />
+
+
 Renombrar el nodo como **"response latency chart"** (clic derecho → Rename). Nada fuera de lo normal en la latencia.
 
 ### 🕰️ Events Based on `start_time` Field
@@ -157,6 +167,9 @@ Ejecutar la query. Esta vez aparece un resultado: un único evento con código *
 Se puede inspeccionar el payload JSON completo con clic derecho sobre el campo `content` → **View field details**.
 
 Cambiar el color del nodo a **verde** para referencia futura.
+Hasta aqui nuestra investigación deberia de verse de esta manera 
+<img width="420" height="917" alt="image" src="https://github.com/user-attachments/assets/632a56fb-75a6-4145-90ed-e14036a9376f" />
+
 
 ### 🧵 What Was Executed With the Request? (Distributed Tracing)
 
@@ -168,6 +181,8 @@ Para investigar qué ocurrió durante esta solicitud, usamos Dynatrace Distribut
    - **Pivot query by evidence** desde el menú de la Evidence list, para definir una nueva query donde se usan los valores de evidencia (crea nuevos nodos, cada uno con su propio valor de evidencia). *(Método usado en este paso.)*
    - Clic derecho sobre el registro en los resultados → **Pivot query by → Trace ID**, que crea un nuevo nodo de query bajo el nodo actual.
    - Clic derecho sobre el `trace_id` en la tabla → **Pivot query by → Use custom dimension**, para definir una query personalizada con los valores elegidos.
+<img width="1261" height="1030" alt="image" src="https://github.com/user-attachments/assets/b2426932-c10c-4420-b02f-52ac5557132d" />
+
 
 ## 🧩 Lab 1.3 - Pivot From Evidence Values (queries)
 
@@ -175,18 +190,18 @@ Para investigar qué ocurrió durante esta solicitud, usamos Dynatrace Distribut
 
 Navegar hasta el primer nodo (el de todos los logs del cluster). Desde el menú de la Evidence list **"errors trace"**, elegir **Pivot query by evidence**. En el modal de pivoting, en vez del comando `search` por defecto, usar un `filter`:
 
-```dql
-| filter trace_id == "$value"
-```
-
 Query final construida:
 
 ```dql
 fetch logs
 | filter trace_id == "$value"
 ```
+<img width="1419" height="596" alt="image" src="https://github.com/user-attachments/assets/284c1fb7-e2e9-41fb-8d28-33422e0c7908" />
+
 
 El macro `$value` se reemplaza por cada valor de la Evidence list (por ahora solo hay uno; si se agregan más valores, se generan más nodos de query).
+<img width="1440" height="683" alt="image" src="https://github.com/user-attachments/assets/1f677635-c4c2-4255-bdcf-2df1e722c558" />
+
 
 Seleccionar **Pivot 2 queries** para ejecutar. Se crean nuevas ramas bajo el primer nodo, una por cada valor de `trace_id`.
 
@@ -244,6 +259,9 @@ fetch logs
 
 Ejecutar la query. Los logs muestran que los heartbeats/health checks empezaron a fallar después de la request, y el control plane de K8S reinició el contenedor de forma graceful al marcarlo como unhealthy:
 
+<img width="713" height="860" alt="image" src="https://github.com/user-attachments/assets/bb75ab57-97aa-46f4-bf18-a23c305ccc02" />
+
+
 ```
 Killing container with a grace period
 ```
@@ -275,6 +293,9 @@ Volver al primer nodo **morado** para analizar el fragmento de heartbeat que se 
 ```dql
 | filter contains(content, "Heartbeat Fragment")
 ```
+
+<img width="1377" height="598" alt="image" src="https://github.com/user-attachments/assets/8d6b9127-6637-4d72-ac7e-01c54acb0c38" />
+
 
 2. Extraer el bitmap del heartbeat como un array (hasta 100 elementos de 1 carácter):
 
@@ -317,6 +338,9 @@ fetch logs
 
 Los resultados no dicen mucho directamente en el Security Investigator; se usará Notebooks para darles mejor formato. Cambiar el color del nodo a **dorado (Gold)** y renombrarlo a **"Heartbeats"**.
 
+<img width="758" height="938" alt="image" src="https://github.com/user-attachments/assets/c318a0e2-b9b5-4063-ac59-cc40192d808a" />
+
+
 ### 📓 Report Your Investigation Results in Notebooks
 
 Para generar un reporte, seleccionar (Ctrl/Cmd + clic) los siguientes nodos y elegir **Download nodes as → Notebooks document** (marcar el checkbox **Results** para incluir resultados, luego **Download**):
@@ -327,6 +351,11 @@ Para generar un reporte, seleccionar (Ctrl/Cmd + clic) los siguientes nodos y el
 - 1º nodo morado — request que causó el error
 - Nodo neón — reinicio de la aplicación
 - Nodo dorado — bitmap de heartbeats
+  
+<img width="438" height="624" alt="image" src="https://github.com/user-attachments/assets/d29fbb64-9d5c-43b7-bb90-6f226147c5d3" />
+
+<img width="1071" height="636" alt="image" src="https://github.com/user-attachments/assets/98bbdd17-f00e-405f-ab7a-91f9af9c54e3" />
+
 
 ### 🎨 Illustrate Your Report
 
