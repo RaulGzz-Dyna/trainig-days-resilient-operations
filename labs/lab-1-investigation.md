@@ -168,6 +168,7 @@ Se puede inspeccionar el payload JSON completo con clic derecho sobre el campo `
 
 Cambiar el color del nodo a **verde** para referencia futura.
 Hasta aqui nuestra investigación deberia de verse de esta manera 
+
 <img width="420" height="917" alt="image" src="https://github.com/user-attachments/assets/632a56fb-75a6-4145-90ed-e14036a9376f" />
 
 
@@ -200,6 +201,7 @@ fetch logs
 
 
 El macro `$value` se reemplaza por cada valor de la Evidence list (por ahora solo hay uno; si se agregan más valores, se generan más nodos de query).
+
 <img width="1440" height="683" alt="image" src="https://github.com/user-attachments/assets/1f677635-c4c2-4255-bdcf-2df1e722c558" />
 
 
@@ -258,6 +260,7 @@ fetch logs
 ```
 
 Ejecutar la query. Los logs muestran que los heartbeats/health checks empezaron a fallar después de la request, y el control plane de K8S reinició el contenedor de forma graceful al marcarlo como unhealthy:
+
 
 <img width="713" height="860" alt="image" src="https://github.com/user-attachments/assets/bb75ab57-97aa-46f4-bf18-a23c305ccc02" />
 
