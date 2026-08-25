@@ -85,3 +85,5 @@ fetch security.events
 | limit 5
 | sort Total desc
 ```
+
+<img width="1788" height="776" alt="image" src="https://github.com/user-attachments/assets/4c87eab4-4909-46f7-9216-96332dab6240" />
